@@ -1,0 +1,26 @@
+# CHANGES_VS_CHRONOLOGICAL.md
+
+# Differences from Chronological Experiments
+
+## Summary
+
+| Component | Chronological | Random-Stratified |
+|----------|---------------|-------------------|
+| Dataset split | Time-based | Random stratified |
+| Class balance | Implicit | Explicitly preserved |
+| Seed | Fixed | Same fixed seed |
+| Architectures | Same | Same |
+| Training loop | Same | Same |
+| Metrics | Same | Same |
+
+## Dataset Splitting
+Chronological experiments use time-ordered splits reflecting deployment
+conditions. Random-stratified experiments pool all samples and apply stratified
+random sampling with a fixed seed.
+
+## Hyperparameters
+Hyperparameters may differ across models. (please check the hyperparameters as mentioned in all_models_random_stratified_eye_split_python_notebook.ipynb)
+
+## Unchanged Components
+Model architectures, loss functions, optimizer types, training logic, and
+evaluation metrics remain unchanged.

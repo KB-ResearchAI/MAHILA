@@ -1,0 +1,30 @@
+# Configuration: Chronological Multi-Image Models with Metadata
+
+experiment_type: comparative
+split_strategy: chronological
+hb_threshold: <9 g/dL
+seed: 42
+
+models:
+  - tri_left_eye
+  - tri_right_eye
+  - hexa_eye
+
+inputs:
+  images:
+    - conjunctiva_extracted_eye_images
+  metadata:
+    - age_at_registration
+    - days_since_lmp
+    - lighting_indicators
+
+Hyperparameters:
+  Adjusted
+
+evaluation:
+  metrics:
+    - precision
+    - recall
+    - f1_score
+    - accuracy
+    - roc_auc

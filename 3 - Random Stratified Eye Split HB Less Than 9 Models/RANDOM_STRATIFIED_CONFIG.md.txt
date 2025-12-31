@@ -1,0 +1,63 @@
+# RANDOM_STRATIFIED_CONFIG.md
+
+#main changes from chronological models
+
+## Dataset Split Logic
+
+```python
+from sklearn.model_selection import train_test_split
+
+all_imgs = train_imgs + val_imgs + test_imgs
+all_lbls = train_lbls + val_lbls + test_lbls
+all_filenames = train_filenames + val_filenames + test_filenames
+
+X_temp, X_test_strat, \
+y_temp, y_test_strat, \
+fname_temp, fname_test_strat = train_test_split(
+    all_imgs,
+    all_lbls,
+    all_filenames,
+    test_size=0.125,
+    stratify=all_lbls,
+    random_state=SEED
+)
+
+X_train_strat, X_val_strat, \
+y_train_strat, y_val_strat, \
+fname_train_strat, fname_val_strat = train_test_split(
+    X_temp,
+    y_temp,
+    fname_temp,
+    test_size=0.142857,
+    stratify=y_temp,
+    random_state=SEED
+)
+
+print("RANDOM STRATIFIED SPLIT")
+print(f"Train: {sum(y_train_strat)} / {len(y_train_strat)}")
+print(f"Val:   {sum(y_val_strat)} / {len(y_val_strat)}")
+print(f"Test:  {sum(y_test_strat)} / {len(y_test_strat)}")
+
+
+
+Example Model Configuration - Hyperparameters
+
+seed: 42
+
+model_name: single_resnet18
+
+training:
+  batch_size: 32
+  learning_rate: 0.0003
+  epochs: 50
+  optimizer: adam
+  use_amp: true
+
+early_stopping:
+  precision: 0.90
+  recall: 0.90
+
+data:
+  img_size: 780
+  normalize: imagenet
+
