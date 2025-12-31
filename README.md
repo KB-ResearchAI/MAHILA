@@ -1,15 +1,68 @@
 # MAHILA
 
 **Moderate Maternal Anemia Heuristics using Imaging Learning Algorithms**
-MAHILA focuses on non-invasive anemia screening using routinely captured eye and tongue images in maternal health settings.
 
+MAHILA focuses on non-invasive anemia screening using routinely captured **eye conjunctiva** and **tongue** images in maternal health settings.
 
-This repository contains code, notebooks, and scripts for **region-of-interest (ROI) extraction**, **dataset construction**, and **model training/evaluation** for anemia classification using **eye conjunctiva** and **tongue** images.
+This repository contains code, notebooks, and scripts for **region-of-interest (ROI) extraction**, **dataset construction**, and **model training and evaluation** for anemia classification using eye and tongue images.
 
-The work focuses on **chronological (time-based) learning**, multiple **hemoglobin (Hb) thresholds**, and consistent dataset construction to support fair evaluation and longitudinal robustness.
+The work emphasizes **chronological (time-based) learning**, evaluation across multiple **hemoglobin (Hb) thresholds**, and consistent dataset construction to support fair evaluation and longitudinal robustness.
 
 > **Data access note**
-> The original clinical images and linked patient metadata are not included in this repository due to data-governance constraints. All scripts assume access to the original dataset through approved channels.
+> Fully **anonymized ROI-level data** are shared in this repository to enable reproducibility.
+> Original raw clinical images and linked patient-identifiable metadata are not redistributed due to data-governance constraints.
+
+
+
+## Model Architecture
+
+This work primarily uses **ResNet-18–based convolutional neural networks** for anemia classification from eye conjunctiva and tongue ROIs.
+
+The ResNet-18 architecture employs **residual (skip) connections**, enabling stable training of deeper networks by mitigating vanishing gradients and improving feature reuse.
+
+![ResNet-18 Architecture](assets/resnet18.png)
+
+**Architecture highlights:**
+
+* Initial convolution followed by max pooling
+* Four residual stages with progressive channel expansion:
+
+  * 64 → 128 → 256 → 512
+* Global average pooling
+* Fully connected classification head with Softmax activation
+
+The architecture diagram is provided for conceptual understanding of the residual learning framework.
+
+
+
+## Model Configuration and Training Hyperparameters
+
+| Component             | Configuration                             |
+|  | -- |
+| Backbone              | ResNet-18                                 |
+| Input Modalities      | Eye conjunctiva ROIs, Tongue ROIs         |
+| Input Resolution      | 224 × 224 (also evaluated: 448, 780)      |
+| Pretraining           | ImageNet                                  |
+| Optimizer             | Adam                                      |
+| Initial Learning Rate | 1e-4                                      |
+| Batch Size            | 32                                        |
+| Loss Function         | Binary Cross-Entropy                      |
+| Class Balancing       | Weighted loss                             |
+| Epochs                | 30–50                                     |
+| Early Stopping        | Validation AUROC                          |
+| Evaluation Metrics    | AUROC, Accuracy, Sensitivity, Specificity |
+| Deployment Formats    | ONNX, TFLite                              |
+
+
+
+## Ethics and Privacy
+
+All shared data are **fully anonymized** and contain **no personally identifiable information**.
+This work complies with ethical guidelines for secondary analysis of clinical imaging data.
+
+* No patient identifiers are released
+* Data are intended strictly for **non-commercial research**
+* Models should not be used for clinical decision-making without external validation and regulatory approval
 
 
 
@@ -25,6 +78,7 @@ The work focuses on **chronological (time-based) learning**, multiple **hemoglob
 ├── 6 - Chronological Split Tongue HB Less Than 9 Models
 ├── 7 - Other Chronological Split Model At Different HB Thresholds & Various Resolution
 ├── Additional Material - Extraction of Eye Conjunctiva and Tongue Region From Original Images
+├── assets
 ├── Data
 ├── Master Results.xlsx
 ├── requirements.txt
@@ -37,8 +91,8 @@ The work focuses on **chronological (time-based) learning**, multiple **hemoglob
 
 ### Tested Environment
 
-* Python **3.12.x**
-* IPython **9.x**
+* Python **3.10.12**
+* IPython **8.12.3**
 
 ### Install Dependencies
 
@@ -46,7 +100,8 @@ The work focuses on **chronological (time-based) learning**, multiple **hemoglob
 pip install -r requirements.txt
 ```
 
-> GPU acceleration (PyTorch / CUDA) is optional. Scripts can be executed in CPU-only mode by disabling CUDA where applicable.
+> GPU acceleration (PyTorch / CUDA) is optional.
+> All scripts can be executed in CPU-only mode by disabling CUDA where applicable.
 
 
 
@@ -96,14 +151,14 @@ Additional Material - Extraction of Eye Conjunctiva and Tongue Region From Origi
 
 **Methodology**
 
-* Consistent color- and morphology-based conjunctiva segmentation
-* Spatial priors to isolate lower-palpebral conjunctiva
-* Automated extraction with logging of region statistics
-* Manual inspection performed post-extraction to remove failures
+* Color- and morphology-based conjunctiva segmentation
+* Spatial priors for lower palpebral conjunctiva isolation
+* Automated extraction with region statistics logging
+* Manual inspection post-extraction
 
 **Observed Quality**
 
-* Conjunctiva ROI acceptance rate: **~93%**
+* ROI acceptance rate: **~93%**
 
 
 
@@ -117,15 +172,13 @@ Additional Material - Extraction of Eye Conjunctiva and Tongue Region From Origi
 
 **Methodology**
 
-* Image extraction from archived ZIP files
 * Segmentation using **Segment Anything Model (SAM)**
 * Morphological refinement and HSV-based color validation
-* Optional fallback storage for rejected masks
-* Manual inspection performed post-extraction
+* Manual inspection post-extraction
 
 **Observed Quality**
 
-* Tongue ROI acceptance rate: **~97%**
+* ROI acceptance rate: **~97%**
 
 
 
@@ -133,11 +186,9 @@ Additional Material - Extraction of Eye Conjunctiva and Tongue Region From Origi
 
 ### Why Chronological Splits?
 
-Chronological (time-based) splitting was used instead of random stratification to:
-
 * Prevent temporal leakage
-* Simulate real-world deployment conditions
-* Ensure consistent comparisons across Hb thresholds
+* Simulate real-world deployment
+* Enable consistent threshold comparisons
 
 
 
@@ -145,19 +196,15 @@ Chronological (time-based) splitting was used instead of random stratification t
 
 For each eye stream independently:
 
-1. Samples are sorted by **sample_date** (ascending).
-2. A single chronological split is created:
+1. Sort samples by **sample_date**
+2. Create a fixed chronological split:
 
    * Train: 75%
    * Validation: 12.5%
    * Test: 12.5%
-3. This split **never changes**.
-4. For each Hb threshold **T**, labels are reassigned:
+3. Reassign labels for each Hb threshold **T**
 
-   * Anemic if `Hb < T`
-   * Non-anemic otherwise
-
-This ensures that performance differences across thresholds reflect **label definition changes only**, not data leakage or split variation.
+This ensures performance differences reflect **label definition changes only**.
 
 
 
@@ -165,21 +212,6 @@ This ensures that performance differences across thresholds reflect **label defi
 
 ```
 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0
-```
-
-### Output Naming Convention
-
-```
-left_eye_3_hb_less_than_8_5/
-right_eye_1_hb_less_than_10_0/
-```
-
-Existing suffixes are stripped automatically to avoid nested threshold names.
-
-A combined split summary is saved as:
-
-```
-tri_split_summary_all_eyes_all_thresholds_timebased.csv
 ```
 
 
@@ -194,88 +226,45 @@ tri_split_summary_all_eyes_all_thresholds_timebased.csv
 1 - Primary Model - Chronological Split Eye HB Less Than 9 Models/
 ```
 
-Includes:
-
-* Single-eye models (left/right eye 1, 2, 3)
-* Tri-eye models (tri left / tri right)
-* Hex-eye model (all six eyes)
-
 **Run Example**
 
 ```bash
 python "right eye 1/scripts/right_eye_1.py"
 ```
 
-Artifacts (metrics, ONNX, TFLite) are saved under each model’s `outputs/` directory.
-
-
-
-### TFLite Evaluation
-
-**Location**
-
-```
-2 - Model Evaluation Chronological Split HB Less Than 9 Via Tflite/
-```
-
-Run via:
-
-* `tflite_evaluation_python_file.py`
-* or `tflite_evaluation_notebook_file.ipynb`
-
-
-
-### Random Stratified Baselines
-
-**Location**
-
-```
-3 - Random Stratified Eye Split HB Less Than 9 Models/
-```
-
-Provided for comparison against chronological splitting.
-
-
-
-### Other Hb Thresholds and Resolutions
-
-**Location**
-
-```
-7 - Other Chronological Split Model At Different HB Thresholds & Various Resolution/
-```
-
-Includes:
-
-* Dataset generation script
-* Executed notebooks for:
-
-  * Multiple Hb thresholds
-  * Multiple image resolutions (224, 448, 780)
-
-To run a different Hb threshold:
-
-1. Update dataset root path
-2. Adjust input resolution if required
-3. Keep the chronological split logic unchanged
-
 
 
 ## Results
 
-* Per-model CSVs: predictions, metrics, cross-validation indices
-* Exported models: `.onnx`, `.tflite`
-* Aggregated metrics: **Master Results.xlsx**
+* Per-model prediction and metric CSVs
+* Exported inference models (`.onnx`, `.tflite`)
+* Aggregated results in **Master Results.xlsx**
 
 
 
-## Reproducibility Notes
+## Limitations and Failure Modes
 
-This repository provides:
+* Sensitivity to lighting variation and motion blur
+* Occasional segmentation failure in extreme occlusion
+* Limited generalizability beyond maternal populations
+* Not intended for direct clinical deployment
 
-* Complete preprocessing logic
-* Deterministic dataset construction
-* Fully reproducible training pipelines
 
-The original dataset is not redistributed. Researchers with approved access can reproduce results by following the documented pipeline.
+
+## Reproducibility Checklist
+
+* [x] Deterministic splits
+* [x] Fixed random seeds
+* [x] Chronological leakage prevention
+* [x] Exported inference models
+* [x] Documented preprocessing pipeline
+
+
+
+## References
+
+1. He, K., Zhang, X., Ren, S., & Sun, J. (2016). *Deep Residual Learning for Image Recognition*. CVPR.
+2. DebuggerCafe. *Implementing ResNet18 in PyTorch from Scratch*.
+   [https://debuggercafe.com/implementing-resnet18-in-pytorch-from-scratch/](https://debuggercafe.com/implementing-resnet18-in-pytorch-from-scratch/)
+
 
