@@ -100,8 +100,9 @@ This work complies with ethical guidelines for secondary analysis of clinical im
 pip install -r requirements.txt
 ```
 
-> GPU acceleration (PyTorch / CUDA) is optional.
-> All scripts can be executed in CPU-only mode by disabling CUDA where applicable.
+> GPU acceleration (PyTorch / CUDA) is mandatory.  
+> The codebase assumes a CUDA-enabled environment and does not include CPU-only execution paths.
+
 
 
 
